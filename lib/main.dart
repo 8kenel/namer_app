@@ -2,9 +2,19 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
+}
+
+String wordPairToString(WordPair pair) {
+  return '${pair.first},${pair.second}';
+}
+
+WordPair stringToWordPair(String string) {
+  List<String> parts = string.split(',');
+  return WordPair(parts[0], parts[1]);
 }
 
 class MyApp extends StatelessWidget {
@@ -29,8 +39,39 @@ class MyApp extends StatelessWidget {
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var history = <WordPair>[];
+  var favorites = <WordPair>[];
 
   GlobalKey? historyListKey;
+
+  MyAppState() {
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final List<String>? historyList = prefs.getStringList('history');
+    if (historyList != null) {
+      history = historyList.map((e) => stringToWordPair(e)).toList();
+    }
+
+    final List<String>? favoritesList = prefs.getStringList('favorites');
+    if (favoritesList != null) {
+      favorites = favoritesList.map((e) => stringToWordPair(e)).toList();
+    }
+    
+    notifyListeners();
+  }
+
+  Future<void> _saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    List<String> historyList = history.map((e) => wordPairToString(e)).toList();
+    prefs.setStringList('history', historyList);
+
+    List<String> favoritesList = favorites.map((e) => wordPairToString(e)).toList();
+    prefs.setStringList('favorites', favoritesList);
+  }
 
   void getNext() {
     history.insert(0, current);
@@ -38,9 +79,8 @@ class MyAppState extends ChangeNotifier {
     animatedList?.insertItem(0);
     current = WordPair.random();
     notifyListeners();
+    _saveData();
   }
-
-  var favorites = <WordPair>[];
 
   void toggleFavorite([WordPair? pair]) {
     pair = pair ?? current;
@@ -50,11 +90,13 @@ class MyAppState extends ChangeNotifier {
       favorites.add(pair);
     }
     notifyListeners();
+    _saveData();
   }
 
   void removeFavorite(WordPair pair) {
     favorites.remove(pair);
     notifyListeners();
+    _saveData();
   }
 }
 
@@ -65,6 +107,12 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<MyAppState>()._loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
