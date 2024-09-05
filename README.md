@@ -4,4 +4,4 @@ The application generates cool-sounding names, such as "newstay", "lightstream",
 
 ## Resources
 
-Made with the assistance of the codelab [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab) written by Filip Hracek (@filiph)
+Made with the assistance of the codelab [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab) created by Filip Hracek (@filiph)
